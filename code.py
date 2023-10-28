@@ -1,44 +1,36 @@
-# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
-# SPDX-License-Identifier: MIT
-
-# You must add a gamepad HID device inside your boot.py file
-# in order to use this example.
-# See this Learn Guide for details:
-# https://learn.adafruit.com/customizing-usb-devices-in-circuitpython/hid-devices#custom-hid-devices-3096614-9
-
 import board
 import digitalio
-import analogio
 import usb_hid
-
+import rotaryio
 from hid_gamepad.simple import Gamepad
 
 gp = Gamepad(usb_hid.devices)
 
 # Create some buttons. The physical buttons are connected
-# to ground on one side and these and these pins on the other.
+# to ground on one side and these pins on the other.
 button_pins = (board.GP11,)
-# the , is after the number is to make it a tuple
 
 # Map the buttons to button numbers on the Gamepad.
 # gamepad_buttons[i] will send that button number when buttons[i]
 # is pushed.
 gamepad_buttons = (1,)
-# the , is after the number is to make it a tuple
 
 buttons = [digitalio.DigitalInOut(pin) for pin in button_pins]
 for button in buttons:
     button.direction = digitalio.Direction.INPUT
     button.pull = digitalio.Pull.UP
 
-# Connect an analog two-axis joystick to A4 and A5.
-# ax = analogio.AnalogIn(board.A4)
-# ay = analogio.AnalogIn(board.A5)
+enc_1 = rotaryio.IncrementalEncoder(board.GP9, board.GP10)
+enc_2 = rotaryio.IncrementalEncoder(board.GP13, board.GP14)
+enc_3 = rotaryio.IncrementalEncoder(board.GP7, board.GP8)
+enc_4 = rotaryio.IncrementalEncoder(board.GP3, board.GP4)
 
-# Equivalent of Arduino's map() function.
-def range_map(x, in_min, in_max, out_min, out_max):
-    return (x - in_min) * (out_max - out_min) // (in_max - in_min) + out_min
+encoders = (enc_1, enc_2, enc_3, enc_4)
 
+# Define gamepad buttons for encoder positions
+encoder_buttons = [(2, 3), (4, 5), (6, 7), (8, 9)]
+
+last_positions = [None] * len(encoders)
 
 while True:
     # Buttons are grounded when pressed (.value = False).
@@ -51,9 +43,17 @@ while True:
             gp.press_buttons(gamepad_button_num)
             print(" press", gamepad_button_num, end="")
 
-    # Convert range[0, 65535] to -127 to 127
-    # gp.move_joysticks(
-    #     x=range_map(ax.value, 0, 65535, -127, 127),
-    #     y=range_map(ay.value, 0, 65535, -127, 127),
-    # )
-    # print(" x", ax.value, "y", ay.value)
+    # Read and print rotary encoder positions and toggle between buttons based on position
+    for i, encoder in enumerate(encoders):
+        position = encoder.position
+        last_position = last_positions[i]
+        if last_position is None or position != last_position:
+            print(f"Encoder {i + 1}: {position}")
+            last_positions[i] = position
+            # Release both buttons
+            gp.release_buttons(encoder_buttons[i][0])
+            gp.release_buttons(encoder_buttons[i][1])
+            # Determine which button to press based on position
+            if 0 <= position < len(encoder_buttons[i]):
+                button_to_press = encoder_buttons[i][position]
+                gp.press_buttons(button_to_press)
