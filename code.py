@@ -86,8 +86,8 @@ def handle_encoders():
 ########################################################################
 ########################################################################
 potentiometer_1 = analogio.AnalogIn(board.GP28_A2)
+# [(input, axis),]
 potentiometers = [(potentiometer_1, "z"), ]
-
 def handle_potentiometer():
     x = 0
     y = 0
@@ -143,10 +143,10 @@ def handle_hall_effect_sensor_toggle():
 ########################################################################
 ########################################################################
 hall_linear_1 = analogio.AnalogIn(board.GP27_A1)
-
+# [(input, button),]
 hall_linear_toggles = [(hall_linear_1, 3),]
 
-def handle_hall_effect_sensor_linear():
+def handle_hall_effect_sensor_linear_toggle():
     # Assuming the potentiometer is connected to pin GP27
     # 49E LINEAR HALL-EFFECT SENSOR 
     for i, hall_linear_toggle in enumerate(hall_linear_toggles):
@@ -199,7 +199,7 @@ while True:
     handle_encoders()
     handle_potentiometer()
     handle_hall_effect_sensor_toggle()
-    handle_hall_effect_sensor_linear()
+    handle_hall_effect_sensor_linear_toggle()
     # time.sleep(0.5)
 
 
