@@ -20,18 +20,17 @@ def range_map(value, in_min, in_max, out_min, out_max):
 # Function to handle button presses and releases
 def handle_buttons():
     for i, button in enumerate(buttons):
-        gamepad_button_num = gamepad_buttons[i]
         if button.value:
-            gp.release_buttons(gamepad_button_num)
+            gp.release_buttons(gamepad_buttons[i])
         else:
-            gp.press_buttons(gamepad_button_num)
+            gp.press_buttons(gamepad_buttons[i])
 
 
 # Define the physical button pins
 button_pins = (board.GP11,)
 
 # Map the physical buttons to gamepad button numbers
-gamepad_buttons = (1,)
+gamepad_buttons = (31,)
 
 # Initialize digital input objects for the physical buttons
 buttons = [digitalio.DigitalInOut(pin) for pin in button_pins]
@@ -87,11 +86,13 @@ def handle_encoders():
 ########################################################################
 potentiometer_1 = analogio.AnalogIn(board.GP28_A2)
 # [(input, axis),]
-potentiometers = [(potentiometer_1, "z"), ]
+potentiometers = [(potentiometer_1, "r_z"), ]
 def handle_potentiometer():
     x = 0
     y = 0
     z = 0
+    r_x = 0
+    r_y = 0
     r_z = 0
     for i, potentiometer in enumerate(potentiometers):
         # Assuming the potentiometer is connected to pin GP28
@@ -105,6 +106,10 @@ def handle_potentiometer():
             y = adc_value
         if(potentiometers[i][1] == "z"):
             z = adc_value
+        if(potentiometers[i][1] == "r_x"):
+            r_x = adc_value
+        if(potentiometers[i][1] == "r_y"):
+            r_y = adc_value
         if(potentiometers[i][1] == "r_z"):
             r_z = adc_value
         # return percentPot
@@ -114,6 +119,8 @@ def handle_potentiometer():
         x=range_map(x, 0, 65535, -127, 127),
         y=range_map(y, 0, 65535, -127, 127),
         z=range_map(z, 0, 65535, -127, 127),
+        r_x=range_map(r_x, 0, 65535, -127, 127),
+        r_y=range_map(r_y, 0, 65535, -127, 127),
         r_z=range_map(r_z, 0, 65535, -127, 127),
     )
     time.sleep(0.1)

@@ -38,15 +38,17 @@ class Gamepad:
         # Typically controllers start numbering buttons at 1 rather than 0.
         # report[0] buttons 1-8 (LSB is button 1)
         # report[1] buttons 9-16
-        # report[2] joystick 0 x: -127 to 127
-        # report[3] joystick 0 y: -127 to 127
-        # report[4] joystick 1 x: -127 to 127
-        # report[5] joystick 1 y: -127 to 127
-        self._report = bytearray(6)
+        # report[2] buttons 17-24
+        # report[3] buttons 25-32
+        # report[4] joystick 0 x: -127 to 127
+        # report[5] joystick 0 y: -127 to 127
+        # report[6] joystick 1 x: -127 to 127
+        # report[7] joystick 1 y: -127 to 127
+        self._report = bytearray(10)
 
         # Remember the last report as well, so we can avoid sending
         # duplicate reports.
-        self._last_report = bytearray(6)
+        self._last_report = bytearray(10)
 
         # Store settings separately before putting into report. Saves code
         # especially for buttons.
@@ -54,6 +56,8 @@ class Gamepad:
         self._joy_x = 0
         self._joy_y = 0
         self._joy_z = 0
+        self._joy_r_x = 0
+        self._joy_r_y = 0
         self._joy_r_z = 0
 
         # Send an initial report to test if HID device is ready.
@@ -87,7 +91,7 @@ class Gamepad:
         self.press_buttons(*buttons)
         self.release_buttons(*buttons)
 
-    def move_joysticks(self, x=None, y=None, z=None, r_z=None):
+    def move_joysticks(self, x=None, y=None, z=None, r_x=None, r_y=None, r_z=None):
         """Set and send the given joystick values.
         The joysticks will remain set with the given values until changed
 
@@ -111,8 +115,12 @@ class Gamepad:
             self._joy_y = self._validate_joystick_value(y)
         if z is not None:
             self._joy_z = self._validate_joystick_value(z)
+        if r_x is not None:
+            self._joy_r_x = self._validate_joystick_value(r_x)
+        if r_y is not None:
+            self._joy_r_y = self._validate_joystick_value(r_y)
         if r_z is not None:
-            self._joy_r_z = self._validate_joystick_value(r_z)
+            self._joy_r_z = self._validate_joystick_value(r_z)            
         self._send()
 
     def reset_all(self):
@@ -121,6 +129,8 @@ class Gamepad:
         self._joy_x = 0
         self._joy_y = 0
         self._joy_z = 0
+        self._joy_r_x = 0
+        self._joy_r_y = 0
         self._joy_r_z = 0
         self._send(always=True)
 
@@ -128,14 +138,17 @@ class Gamepad:
         """Send a report with all the existing settings.
         If ``always`` is ``False`` (the default), send only if there have been changes.
         """
+        # https://docs.python.org/3/library/struct.html
         struct.pack_into(
-            "<Hbbbb",
+            "<Lbbbbbb",
             self._report,
             0,
             self._buttons_state,
             self._joy_x,
             self._joy_y,
             self._joy_z,
+            self._joy_r_x,
+            self._joy_r_y,
             self._joy_r_z,
         )
 
@@ -146,8 +159,8 @@ class Gamepad:
 
     @staticmethod
     def _validate_button_number(button):
-        if not 1 <= button <= 16:
-            raise ValueError("Button number must in range 1 to 16")
+        if not 1 <= button <= 32:
+            raise ValueError("Button number must in range 1 to 32")
         return button
 
     @staticmethod
